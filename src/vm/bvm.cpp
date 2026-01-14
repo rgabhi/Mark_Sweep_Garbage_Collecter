@@ -69,32 +69,18 @@ void VM::gc(){
             mark_object(obj);
         }
     }
-    // reinit free_list
-    this->free_list = NULL;
-    Object* curr = free_list;// last free obj found
+    free_list = NULL;
 
-    for(int i = 0; i < HEAP_SIZE; i++){
-        if(this->heap[i].marked){
-            this->heap[i].marked = false;
-        }
-        else{
-            if(!free_list){
-                free_list = &this->heap[i];
-                curr = free_list;
+for (int i = 0; i < HEAP_SIZE; i++) {
+    Object* obj = &heap[i];
+    if (!obj->marked) {
+        obj->right = free_list;
+        free_list = obj;
+    } else {
+        obj->marked = false; // reset for next GC
+    }
+}
 
-            }
-            else{
-                curr->right = &this->heap[i];
-                curr = curr->right;
-            }
-        }
-    }
-    //make tail right point to NULL to end list properly
-    if (curr){
-        // when there is something to sweep
-        // not everything marked
-        curr->right = NULL;
-    }
 }
  
 void VM::run(){
