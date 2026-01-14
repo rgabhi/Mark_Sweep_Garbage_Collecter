@@ -23,10 +23,32 @@ VM::VM(unsigned char* bytecode){
 
  // HEAP
 // new_pair
+Object* VM::new_pair(Object* l, Object* r){
+    if(free_list == NULL){
+        printf("Heap Overflow");
+        return NULL;
+    }
+    Object* curr = free_list;
+    free_list = free_list->right;
+    curr->left = l;
+    curr->right = r;
+    curr->marked = false;
 
+    return curr;
+}
 
 // mark_obj
-
+void VM::mark_object(Object* obj){
+    if(obj == NULL){
+        return;
+    }
+    if(obj->marked){
+        return;
+    }
+    obj->marked=true;
+    mark_object(obj->left);
+    mark_object(obj->right);
+}
 
 // helper to check st size
 bool VM::check_stack(int count) {
