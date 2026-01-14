@@ -7,12 +7,19 @@
 #define RET_STACK_SIZE 256
 
 #define LINE_SIZE 128
+#define HEAP_SIZE 1024 // define heap
 
 
 // #include <cstdint>
 #include <iostream>
 #include <stdlib.h>
 #include <cstring>
+
+struct Object{
+    bool marked; // for garbage collection
+    Object* left;
+    Object* right;
+};
 
 
 class VM {
@@ -26,7 +33,7 @@ class VM {
         bool running;
 
         //stack
-        int stack[STACK_SIZE];
+        long long stack[STACK_SIZE];
         int st_ptr; // stack ptr
 
         // memory
@@ -36,11 +43,18 @@ class VM {
         int ret_stack[RET_STACK_SIZE];
         int rst_ptr;
 
+        //heap
+        Object heap[HEAP_SIZE];
+        Object* free_list; // to track empty slots
+
         VM(unsigned char* bytecode);
         void run();
         bool check_stack(int count);
         long long getInstructionCnt();
-        
+        //heap methods
+        Object* new_pair(Object* l, Object* r);
+        void mark_object(Object *obj);
+        void gc();
 };
 
 
