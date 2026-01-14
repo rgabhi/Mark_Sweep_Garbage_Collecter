@@ -12,7 +12,21 @@ VM::VM(unsigned char* bytecode){
             this->instruction_cnt=0;
             // init memory to zero
             memset(this->memory, 0, sizeof(this->memory));
+            // init heap
+            for(int i = 0; i < HEAP_SIZE - 1; i++){
+                this->heap[i].right = &this->heap[i + 1];
+            }
+            this->heap[HEAP_SIZE -1].right = NULL;
+            //free list
+            this->free_list = &this->heap[0];
 }
+
+ // HEAP
+// new_pair
+
+
+// mark_obj
+
 
 // helper to check st size
 bool VM::check_stack(int count) {
@@ -22,6 +36,43 @@ bool VM::check_stack(int count) {
         return false;
     }
     return true;
+}
+
+
+void VM::gc(){
+    for(int i = 0; i < this->st_ptr; i++){
+        Object* obj = (Object*) stack[i]; // cast int to ptr
+        if(obj >= this->heap && obj < this->heap + HEAP_SIZE){
+            // valid ptr in our heap range
+            mark_object(obj);
+        }
+    }
+    // reinit free_list
+    this->free_list = NULL;
+    Object* curr = free_list;// last free obj found
+
+    for(int i = 0; i < HEAP_SIZE; i++){
+        if(this->heap[i].marked){
+            this->heap[i].marked = false;
+        }
+        else{
+            if(!free_list){
+                free_list = &this->heap[i];
+                curr = free_list;
+
+            }
+            else{
+                curr->right = &this->heap[i];
+                curr = curr->right;
+            }
+        }
+    }
+    //make tail right point to NULL to end list properly
+    if (curr){
+        // when there is something to sweep
+        // not everything marked
+        curr->right = NULL;
+    }
 }
  
 void VM::run(){
