@@ -4,54 +4,27 @@
 
 long long VM::getInstructionCnt(){return instruction_cnt;}
 
-VM::VM(unsigned char* bytecode){
+VM::VM(unsigned char* bytecode) {
             this->program = bytecode;
             this->inst_ptr = bytecode;
             this->st_ptr = 0;
             this->rst_ptr = 0;
-            this->instruction_cnt=0;
+            this->instruction_cnt = 0;
+            
             // init memory to zero
             memset(this->memory, 0, sizeof(this->memory));
-            // init heap
+            
+            // init heap (Link all objects into the free list initially)
             for(int i = 0; i < HEAP_SIZE - 1; i++){
                 this->heap[i].right = &this->heap[i + 1];
                 this->heap[i].marked = false;  
             }
             this->heap[HEAP_SIZE -1].right = NULL;
             this->heap[HEAP_SIZE -1].marked = false; 
-
-            //free list
+    
             this->free_list = &this->heap[0];
 }
 
- // HEAP
-// new_pair
-Object* VM::new_pair(Object* l, Object* r){
-    if(free_list == NULL){
-        printf("Heap Overflow");
-        return NULL;
-    }
-    Object* curr = free_list;
-    free_list = free_list->right;
-    curr->left = l;
-    curr->right = r;
-    curr->marked = false;
-
-    return curr;
-}
-
-// mark_obj
-void VM::mark_object(Object* obj){
-    if(obj == NULL){
-        return;
-    }
-    if(obj->marked){
-        return;
-    }
-    obj->marked=true;
-    mark_object(obj->left);
-    mark_object(obj->right);
-}
 
 // helper to check st size
 bool VM::check_stack(int count) {
@@ -63,43 +36,6 @@ bool VM::check_stack(int count) {
     return true;
 }
 
-
-void VM::gc(){
-    for(int i = 0; i < this->st_ptr; i++){
-        Object* obj = (Object*) stack[i]; // cast int to ptr
-        if(obj >= this->heap && obj < this->heap + HEAP_SIZE){
-            // valid ptr in our heap range
-            mark_object(obj);
-        }
-    }
-    // reinit free_list
-    this->free_list = NULL;
-    Object* curr = free_list;// last free obj found
-
-    for(int i = 0; i < HEAP_SIZE; i++){
-        if(this->heap[i].marked){
-            this->heap[i].marked = false;
-        }
-        else{
-            if(!free_list){
-                free_list = &this->heap[i];
-                curr = free_list;
-
-            }
-            else{
-                curr->right = &this->heap[i];
-                curr = curr->right;
-            }
-        }
-    }
-    //make tail right point to NULL to end list properly
-    if (curr){
-        // when there is something to sweep
-        // not everything marked
-        curr->right = NULL;
-    }
-}
- 
 void VM::run(){
     this->running = true;
     while(running){
