@@ -26,7 +26,7 @@ void push(VM* vm, Object* obj);
 Object* pop(VM* vm);
 
 // Triggers Mark-Sweep Garbage Collector
-void gc(VM* vm);
+int gc(VM* vm);
 
 // Helper macro for convention
 #define VAL_OBJ(x) (x)
