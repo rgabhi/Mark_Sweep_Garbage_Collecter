@@ -99,7 +99,6 @@ Cyclic References         | PASSED     | 0.000858        | 0
 Deep Object Graph         | PASSED     | 0.000888        | 0              
 Closure Capture           | PASSED     | 0.000853        | 0              
 Stress Allocation         | PASSED     | 0.002200        | 300000           
-...
 ```
 
 ## 🧪 Test Cases Explained
