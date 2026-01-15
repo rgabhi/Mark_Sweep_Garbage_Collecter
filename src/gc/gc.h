@@ -16,6 +16,8 @@ struct Object {
 
 // alloc a new object pair in the VM's heap
 Object* new_pair(VM* vm, Object* l, Object* r);
+Object* new_function(VM* vm);
+Object* new_closure(VM* vm, Object* fn, Object* env);
 
 // push obj reference on VM stack
 void push(VM* vm, Object* obj);

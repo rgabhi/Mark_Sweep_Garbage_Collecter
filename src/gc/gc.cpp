@@ -41,6 +41,14 @@ Object* new_pair(VM* vm, Object* l, Object* r) {
     return curr;
 }
 
+Object* new_function(VM* vm) {
+    return new_pair(vm, NULL, NULL);
+}
+
+Object* new_closure(VM* vm, Object* fn, Object* env) {
+    return new_pair(vm, fn, env);
+}
+
 void push(VM* vm, Object* obj) {
     if (vm->st_ptr >= STACK_SIZE) {
         printf("Stack Overflow\n");
@@ -97,3 +105,4 @@ void gc(VM* vm) {
         curr_free->right = NULL;
     }
 }
+

@@ -12,15 +12,6 @@ bool is_freed(VM* vm, Object* obj) {
     return false;
 }
 
-// Helper wrappers specifically for this test context
-Object* new_function(VM* vm) {
-    return new_pair(vm, NULL, NULL);
-}
-
-Object* new_closure(VM* vm, Object* fn, Object* env) {
-    return new_pair(vm, fn, env);
-}
-
 int main() {
     std::cout << "\n--- Test 1.6.6: Closure Capture ---\n";
     unsigned char code[CODE_SIZE] = {0};
