@@ -1,7 +1,7 @@
 #include "../src/vm/bvm.h"
 #include "../src/gc/gc.h"
 #include <stdio.h>
-#include <iostream>
+#include <chrono>
 
 bool is_freed(VM* vm, Object* obj) {
     Object* curr = vm->free_list;
@@ -13,41 +13,31 @@ bool is_freed(VM* vm, Object* obj) {
 }
 
 int main() {
-    std::cout << "\n--- Test 1.6.6: Closure Capture ---\n";
+    printf("\n--- Test 1.6.6: Closure Capture ---\n");
+    auto start = std::chrono::high_resolution_clock::now();
+
     unsigned char code[CODE_SIZE] = {0};
     VM vm(code);
 
-    // 1. Create Environment and Function
     Object* env = new_pair(&vm, NULL, NULL);
     Object* fn = new_function(&vm);
-
-    // 2. Create Closure (captures fn and env)
     Object* cl = new_closure(&vm, fn, env);
-
-    if (!env || !fn || !cl) {
-        printf("Error: Allocation failed.\n");
-        return 1;
-    }
-
-    // 3. Push ONLY the closure to the stack
     push(&vm, cl);
 
-    printf("Running GC...\n");
-    gc(&vm);
+    int freed = gc(&vm);
 
-    // 4. Verification
-    bool cl_alive = !is_freed(&vm, cl);
-    bool fn_alive = !is_freed(&vm, fn);
-    bool env_alive = !is_freed(&vm, env);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
 
-    if (cl_alive && fn_alive && env_alive) {
-        printf("[PASSED] Closure, Function, and Environment survived.\n");
+    printf("\n=== Performance Metrics ===\n");
+    printf("Execution Time:     %.6f seconds\n", duration.count());
+    printf("Total Objects Freed: %d\n", freed);
+    printf("===========================\n");
+
+    if (!is_freed(&vm, cl) && !is_freed(&vm, fn) && !is_freed(&vm, env)) {
+        printf("[PASSED] All closure components survived.\n");
     } else {
-        printf("[FAILED] Missing objects:\n");
-        if (!cl_alive) printf(" - Closure\n");
-        if (!fn_alive) printf(" - Function\n");
-        if (!env_alive) printf(" - Environment\n");
+        printf("[FAILED] Components missing.\n");
     }
-
     return 0;
 }

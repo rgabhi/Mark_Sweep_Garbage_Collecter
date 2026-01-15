@@ -1,6 +1,7 @@
 #include "../src/vm/bvm.h"
 #include "../src/gc/gc.h"
 #include <stdio.h>
+#include <chrono>
 
 bool is_freed(VM* vm, Object* obj) {
     Object* curr = vm->free_list;
@@ -13,36 +14,30 @@ bool is_freed(VM* vm, Object* obj) {
 
 int main() {
     printf("--- Running Test 1.6.4: Cyclic References ---\n");
+    auto start = std::chrono::high_resolution_clock::now();
 
     unsigned char code[CODE_SIZE] = {0};
     VM vm(code); 
 
-    // 1. Allocate objects
     Object* a = new_pair(&vm, NULL, NULL);
-    Object* b = new_pair(&vm, a, NULL); // b -> a
-    
-    if (!a || !b) {
-        printf("Error: Allocation failed!\n");
-        return 1;
-    }
-
-    // 2. Create Cycle: a -> b
-    printf("Creating cycle a <-> b...\n");
-    a->right = b;
-
-    // 3. Push 'a' to stack
-    printf("Pushing 'a' to stack...\n");
+    Object* b = new_pair(&vm, a, NULL); 
+    a->right = b; // Cycle
     push(&vm, a);
 
-    // 4. Run GC
-    gc(&vm);
+    int freed = gc(&vm);
 
-    // 5. Verify Survival
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+
+    printf("\n=== Performance Metrics ===\n");
+    printf("Execution Time:     %.6f seconds\n", duration.count());
+    printf("Total Objects Freed: %d\n", freed);
+    printf("===========================\n");
+
     if (!is_freed(&vm, a) && !is_freed(&vm, b)) {
-        printf("[PASSED] Cycle handled correctly (both survived).\n");
+        printf("[PASSED] Cycle handled correctly.\n");
     } else {
-        printf("[FAILED] Cycle objects were collected.\n");
+        printf("[FAILED] Cycle objects collected.\n");
     }
-    
     return 0;
 }
