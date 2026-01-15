@@ -68,7 +68,21 @@ Object* pop(VM* vm) {
     return (Object*)vm->stack[vm->st_ptr];
 }
 
+// --- helper to count free list size ---
+int count_free_list(VM* vm) {
+    int count = 0;
+    Object* curr = vm->free_list;
+    while (curr) {
+        count++;
+        curr = curr->right;
+    }
+    return count;
+}
+
 int gc(VM* vm) {
+    //Snapshot: How many slots were ALREADY free?
+    int initial_free_count = count_free_list(vm);
+
     // mark
     // iterate through the VM stack to find roots
     for (int i = 0; i < vm->st_ptr; i++) {
@@ -83,7 +97,8 @@ int gc(VM* vm) {
     // sweep
     vm->free_list = NULL;
     Object* curr_free = NULL; // tracks end of new free_list
-    int freed_count = 0; 
+    int final_free_count = 0; // total slots available after GC 
+
 
     for (int i = 0; i < HEAP_SIZE; i++) {
         if (vm->heap[i].marked) {
@@ -91,7 +106,7 @@ int gc(VM* vm) {
             vm->heap[i].marked = false;
         } else {
             // obj is dead, add to free list
-            freed_count++; 
+            final_free_count++;
             if (vm->free_list == NULL) {
                 vm->free_list = &vm->heap[i];
                 curr_free = vm->free_list;
@@ -106,6 +121,13 @@ int gc(VM* vm) {
     if (curr_free) {
         curr_free->right = NULL;
     }
-    return freed_count;
+    
+    // actually_reclaimed = (Space After GC) - (Space Before GC)
+    int actually_reclaimed = final_free_count - initial_free_count;
+    
+    // Safety check (should not happen, but good for debug)
+    if (actually_reclaimed < 0) actually_reclaimed = 0;
+
+    return actually_reclaimed;
 }
 
