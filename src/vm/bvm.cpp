@@ -15,8 +15,11 @@ VM::VM(unsigned char* bytecode){
             // init heap
             for(int i = 0; i < HEAP_SIZE - 1; i++){
                 this->heap[i].right = &this->heap[i + 1];
+                this->heap[i].marked = false;  
             }
             this->heap[HEAP_SIZE -1].right = NULL;
+            this->heap[HEAP_SIZE -1].marked = false; 
+
             //free list
             this->free_list = &this->heap[0];
 }
