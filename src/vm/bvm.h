@@ -11,15 +11,10 @@
 
 
 // #include <cstdint>
+#include "../gc/gc.h" // GC defs
 #include <iostream>
 #include <stdlib.h>
 #include <cstring>
-
-struct Object{
-    bool marked; // for garbage collection
-    Object* left;
-    Object* right;
-};
 
 
 class VM {
@@ -43,7 +38,7 @@ class VM {
         int ret_stack[RET_STACK_SIZE];
         int rst_ptr;
 
-        //heap
+        //heap (accessed by GC)
         Object heap[HEAP_SIZE];
         Object* free_list; // to track empty slots
 
@@ -51,12 +46,7 @@ class VM {
         void run();
         bool check_stack(int count);
         long long getInstructionCnt();
-        //heap methods
-        Object* new_pair(Object* l, Object* r);
-        void mark_object(Object *obj);
-        void gc();
+        
 };
-
-
 
 #endif

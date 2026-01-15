@@ -1,9 +1,9 @@
 #include "../src/vm/bvm.h"
+#include "../src/gc/gc.h"
 #include <stdio.h>
 #include <iostream>
 
-
-void test_stress_allocation() {
+int main() {
     std::cout << "\n--- Test 1.6.7: Stress Allocation ---\n";
     unsigned char code[CODE_SIZE] = {0};
     VM vm(code);
@@ -11,32 +11,31 @@ void test_stress_allocation() {
     int iterations = 100000;
     int success_count = 0;
     
-    printf("Attempting %d allocations (with intermediate GCs)...\n", iterations);
+    printf("Attempting %d allocations (relying on GC)...\n", iterations);
 
     for (int i = 0; i < iterations; i++) {
-        // Allocate object (without rooting it)
-        Object* obj = vm.new_pair(NULL, NULL);
+        // Allocate object (without rooting it, making it garbage immediately)
+        Object* obj = new_pair(&vm, NULL, NULL);
 
-        // If heap is full, the current BVM returns NULL. 
-        // We must manually trigger GC to reclaim the unrooted garbage from previous iterations.
+        // If heap is full, manually trigger GC to reclaim the unrooted garbage
         if (obj == NULL) {
-            vm.gc();
+            gc(&vm);
             
             // Try allocation again
-            obj = vm.new_pair(NULL, NULL);
+            obj = new_pair(&vm, NULL, NULL);
             
             if (obj == NULL) {
                 printf("[FAILED] Out of memory even after GC at iteration %d\n", i);
-                return;
+                return 1;
             }
         }
         success_count++;
     }
 
     // Final cleanup
-    vm.gc();
+    gc(&vm);
 
-    // Check if Heap is empty (since nothing was ever rooted)
+    // Check if Heap is effectively empty (everything was unrooted garbage)
     int free_nodes = 0;
     Object* curr = vm.free_list;
     while(curr) {
@@ -45,14 +44,10 @@ void test_stress_allocation() {
     }
 
     if (free_nodes == HEAP_SIZE) {
-        printf("[PASSED] Completed %d allocations. Heap is completely empty after final GC.\n", success_count);
+        printf("[PASSED] %d allocations succeeded. Heap empty after final GC.\n", success_count);
     } else {
         printf("[FAILED] Heap dirty. Free nodes: %d / %d\n", free_nodes, HEAP_SIZE);
     }
-}
 
-int main() {
-  
-    test_stress_allocation();
     return 0;
 }
