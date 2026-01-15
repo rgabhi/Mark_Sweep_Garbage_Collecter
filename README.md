@@ -92,10 +92,13 @@ This will generate a colored report in the terminal:
 ```text
 TEST CASE                 | RESULT     | TIME (s)        | FREED (objs)   
 --------------------------+------------+-----------------+----------------
-Basic Reachability        | PASSED     | 0.000021        | 0              
-Unreachable Objects       | PASSED     | 0.000008        | 1              
-Transitive Reachability   | PASSED     | 0.000003        | 0              
-Cyclic References         | PASSED     | 0.000004        | 2              
+Basic Reachability        | PASSED     | 0.000890        | 0              
+Unreachable Objects       | PASSED     | 0.000953        | 1              
+Transitive Reachability   | PASSED     | 0.000887        | 0              
+Cyclic References         | PASSED     | 0.000858        | 0   
+Deep Object Graph         | PASSED     | 0.000888        | 0              
+Closure Capture           | PASSED     | 0.000853        | 0              
+Stress Allocation         | PASSED     | 0.002200        | 300000           
 ...
 ```
 
