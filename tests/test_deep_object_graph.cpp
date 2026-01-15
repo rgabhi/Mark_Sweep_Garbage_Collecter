@@ -1,7 +1,7 @@
 #include "../src/vm/bvm.h"
 #include "../src/gc/gc.h"
 #include <stdio.h>
-#include <iostream>
+#include <chrono>
 
 bool is_freed(VM* vm, Object* obj) {
     Object* curr = vm->free_list;
@@ -13,44 +13,38 @@ bool is_freed(VM* vm, Object* obj) {
 }
 
 int main() {
-    std::cout << "\n--- Test 1.6.5: Deep Object Graph ---\n";
+    printf("--- Running Test 1.6.5: Deep Object Graph ---\n");
+    auto start = std::chrono::high_resolution_clock::now();
+
     unsigned char code[CODE_SIZE] = {0};
     VM vm(code);
 
-    // HEAP_SIZE is defined in bvm.h (assumed 1024 or larger)
-    // We leave some buffer space.
-    int list_size = HEAP_SIZE - 50; 
-    if (list_size < 10) list_size = 50; // Safety check
-
-    printf("Allocating linked list of %d objects...\n", list_size);
-
+    int list_size = 1000; // Large list
     Object* root = new_pair(&vm, NULL, NULL);
     Object* cur = root;
 
-    // Create list: root -> node -> node ...
     for (int i = 0; i < list_size; i++) {
         Object* next = new_pair(&vm, NULL, NULL);
-        if (!next) {
-            printf("Heap exhaustion at index %d (expected if heap small)\n", i);
-            break;
-        }
+        if(!next) break; 
         cur->right = next;
         cur = next;
     }
-
-    // Root the start of the list
     push(&vm, root);
 
-    printf("Running GC...\n");
-    gc(&vm);
+    int freed = gc(&vm);
 
-    // Verification
-    if (is_freed(&vm, root)) {
-        printf("[FAILED] Root object was collected.\n");
-    } else if (is_freed(&vm, cur)) {
-        printf("[FAILED] Tail object was collected (recursion issue).\n");
-    } else {
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+
+    printf("\n=== Performance Metrics ===\n");
+    printf("Execution Time:     %.6f seconds\n", duration.count());
+    printf("Total Objects Freed: %d\n", freed);
+    printf("===========================\n");
+
+    if (!is_freed(&vm, root) && !is_freed(&vm, cur)) {
         printf("[PASSED] Root and Tail objects survived.\n");
+    } else {
+        printf("[FAILED] Objects collected.\n");
     }
     return 0;
 }
