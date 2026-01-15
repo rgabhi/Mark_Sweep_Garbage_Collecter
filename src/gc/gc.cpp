@@ -68,7 +68,7 @@ Object* pop(VM* vm) {
     return (Object*)vm->stack[vm->st_ptr];
 }
 
-void gc(VM* vm) {
+int gc(VM* vm) {
     // mark
     // iterate through the VM stack to find roots
     for (int i = 0; i < vm->st_ptr; i++) {
@@ -83,6 +83,7 @@ void gc(VM* vm) {
     // sweep
     vm->free_list = NULL;
     Object* curr_free = NULL; // tracks end of new free_list
+    int freed_count = 0; 
 
     for (int i = 0; i < HEAP_SIZE; i++) {
         if (vm->heap[i].marked) {
@@ -90,6 +91,7 @@ void gc(VM* vm) {
             vm->heap[i].marked = false;
         } else {
             // obj is dead, add to free list
+            freed_count++; 
             if (vm->free_list == NULL) {
                 vm->free_list = &vm->heap[i];
                 curr_free = vm->free_list;
@@ -104,5 +106,6 @@ void gc(VM* vm) {
     if (curr_free) {
         curr_free->right = NULL;
     }
+    return freed_count;
 }
 
