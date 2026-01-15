@@ -5,36 +5,35 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo "=============================================================================="
-echo "                   GARBAGE COLLECTOR PERFORMANCE REPORT                       "
-echo "=============================================================================="
-printf "%-25s | %-10s | %-15s\n" "TEST CASE" "RESULT" "TIME (s)"
-echo "--------------------------+------------+----------------"
+echo "========================================================================================"
+echo "                         GARBAGE COLLECTOR PERFORMANCE REPORT                           "
+echo "========================================================================================"
+printf "%-25s | %-10s | %-15s | %-15s\n" "TEST CASE" "RESULT" "TIME (s)" "FREED (objs)"
+echo "--------------------------+------------+-----------------+----------------"
 
 run_test() {
     test_name=$1
     exec_name=$2
     
-    # 1. Capture Start Time
-    start_time=$(date +%s.%N)
-    
-    # 2. Run the test and capture output
-    # We redirect stderr to stdout to catch all messages
+    # Run the test and capture output
     output=$(./$exec_name 2>&1)
     
-    # 3. Capture End Time
-    end_time=$(date +%s.%N)
+    # Parse Metrics from output
+    # Looks for "Execution Time:     0.000000 seconds"
+    time_val=$(echo "$output" | grep "Execution Time:" | awk '{print $3}')
     
-    # 4. Calculate Duration
-    duration=$(echo "$end_time - $start_time" | bc)
+    # Looks for "Total Objects Freed: 123"
+    freed_val=$(echo "$output" | grep "Total Objects Freed:" | awk '{print $4}')
 
-    # 5. Check for "PASSED" in the output
+    # Default to 0/N/A if parsing fails
+    if [ -z "$time_val" ]; then time_val="N/A"; fi
+    if [ -z "$freed_val" ]; then freed_val="0"; fi
+
+    # Check Pass/Fail
     if echo "$output" | grep -q "PASSED"; then
-        printf "%-25s | ${GREEN}%-10s${NC} | %-15s\n" "$test_name" "PASSED" "$duration"
+        printf "%-25s | ${GREEN}%-10s${NC} | %-15s | %-15s\n" "$test_name" "PASSED" "$time_val" "$freed_val"
     else
-        printf "%-25s | ${RED}%-10s${NC} | %-15s\n" "$test_name" "FAILED" "$duration"
-        # Optional: Print failure details
-        # echo "$output" 
+        printf "%-25s | ${RED}%-10s${NC} | %-15s | %-15s\n" "$test_name" "FAILED" "$time_val" "$freed_val"
     fi
 }
 
@@ -47,4 +46,4 @@ run_test "Deep Object Graph" "test_deep"
 run_test "Closure Capture" "test_closure"
 run_test "Stress Allocation" "test_stress"
 
-echo "=============================================================================="
+echo "========================================================================================"
