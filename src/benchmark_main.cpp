@@ -7,7 +7,9 @@
 #include "vm/bvm.h"
 #include "assembler/assembler.h"
 
-// Helper to load and assemble a file in memory
+// 1. CALCULATE PROGRAM SIZE
+// This helper assembles the file in memory and returns the 'pc' (Program Counter),
+// which represents the total bytes generated.
 int assemble_file(const char* filename, uint8_t* code_buffer) {
     FILE *in = fopen(filename, "r");
     if (!in) {
@@ -36,13 +38,14 @@ int assemble_file(const char* filename, uint8_t* code_buffer) {
     }
     
     fclose(in);
-    return pc; // Returns total bytes (Program Size)
+    return pc; // <--- THIS RETURNS THE PROGRAM SIZE IN BYTES
 }
 
 void run_benchmark(const std::string& name, const char* filepath) {
     uint8_t code_buffer[CODE_SIZE];
     memset(code_buffer, 0, CODE_SIZE);
 
+    // Get Program Size
     int program_size = assemble_file(filepath, code_buffer);
     
     if (program_size < 0) {
@@ -53,57 +56,29 @@ void run_benchmark(const std::string& name, const char* filepath) {
     int iterations = 100000;
     long long total_instructions = 0;
     
+    // Start Timer
     auto start = std::chrono::high_resolution_clock::now();
     
     for(int i=0; i<iterations; i++) {
         VM vm(code_buffer);
         vm.run();
+        
+        // 2. CAPTURE INSTRUCTION COUNT
+        // We only need to grab this from one run (the first one) since it's deterministic
         if (i == 0) total_instructions = vm.getInstructionCnt();
     }
 
+    // Stop Timer
     auto end = std::chrono::high_resolution_clock::now();
 
+    // 3. CALCULATE AVERAGE TIME
     auto total_duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     double avg_time = total_duration.count() / (double)iterations;
 
+    // Output results formatted as a table
     std::cout << std::left << std::setw(25) << name 
-              << std::left << std::setw(15) << program_size 
-              << std::left << std::setw(20) << total_instructions 
-              << std::left << std::setw(15) << avg_time 
+              << std::left << std::setw(15) << program_size        // Size
+              << std::left << std::setw(20) << total_instructions  // Instructions
+              << std::left << std::setw(15) << avg_time            // Time
               << std::endl;
-}
-
-int main() {
-    struct TestCase {
-        std::string name;
-        const char* path;
-    };
-
-    std::vector<TestCase> tests = {
-        {"Arithmetic", "tests/test1_arithmetic.asm"},
-        {"Circle Area", "tests/test2_circle_area.asm"},
-        {"Loop Sum", "tests/test3_loop_sum.asm"},
-        {"Factorial (Func)", "tests/test4_factorial.asm"},
-        {"Fibonacci", "tests/test5_fibonacci.asm"},
-        {"Nested Calls", "tests/test6_nested_calls.asm"},
-        {"Memory Ops", "tests/test7_memory_ops.asm"},
-        {"Conditional", "tests/test8_conditional.asm"},
-        {"Stack Ops", "tests/test9_stack_ops.asm"},
-        {"Complex Calc", "tests/test10_complex.asm"}
-    };
-
-    std::cout << "=========================================================================\n";
-    std::cout << std::left << std::setw(25) << "Test Case" 
-              << std::left << std::setw(15) << "Size (Bytes)" 
-              << std::left << std::setw(20) << "Instructions Exec" 
-              << std::left << std::setw(15) << "Time (us)" 
-              << std::endl;
-    std::cout << "=========================================================================\n";
-
-    for (const auto& test : tests) {
-        run_benchmark(test.name, test.path);
-    }
-    std::cout << "=========================================================================\n";
-
-    return 0;
 }

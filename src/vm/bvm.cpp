@@ -2,8 +2,6 @@
 #include "../commons.h"
 
 
-long long VM::getInstructionCnt(){return instruction_cnt;}
-
 VM::VM(unsigned char* bytecode) {
             this->program = bytecode;
             this->inst_ptr = bytecode;
@@ -299,5 +297,9 @@ void VM::run(){
 
 
     }
-
+    
 }
+
+    // Getter for the benchmark tool to access the private counter
+long long VM::getInstructionCnt(){ return instruction_cnt; }
+
