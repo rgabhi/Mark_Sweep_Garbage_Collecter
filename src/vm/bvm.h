@@ -7,7 +7,7 @@
 #define RET_STACK_SIZE 256
 
 #define LINE_SIZE 128
-#define HEAP_SIZE 4 // define heap
+#define HEAP_SIZE 120000 // define heap
 
 
 // #include <cstdint>

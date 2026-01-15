@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     vm.run();
 
     if(vm.st_ptr > 0){   
-        printf("Final stack top: %d\n", vm.stack[vm.st_ptr - 1]);
+        printf("Final stack top: %lld\n", vm.stack[vm.st_ptr - 1]);
     } else {
         printf("Stack empty.\n");
     }
